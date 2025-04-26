@@ -5,6 +5,8 @@ import soundfile as sf
 import scipy.fftpack as fft
 import subprocess
 from scipy.signal import medfilt
+from group_frequencies import group_frequencies
+
 
 y, sr = librosa.load('output.mp3', sr=None) #loading file
 
@@ -32,6 +34,18 @@ xf = np.linspace(0, sr / 2, n // 2)
 
 difference = np.abs(yf[:n // 2]) - np.abs(yf_clean[:n // 2]) #calculating the difference between the original and clean signals in frequency domain
 
+threshold = np.max(difference) * 0.5
+high_noise_indices = np.where(difference > threshold)[0]
+high_noise_freqs = xf[high_noise_indices]
+
+bands = group_frequencies(high_noise_freqs, gap=50)  # set gap = 50 Hz
+
+
+#PRINTING THE BANDS
+
+print("Bands to be enhanced:")
+for band in bands:
+    print(f"{band[0]:.1f} Hz to {band[1]:.1f} Hz")
 plt.figure(figsize=(12, 9))
 
 plt.subplot(3, 1, 1)
@@ -43,3 +57,20 @@ plt.ylabel('Amplitude')
 plt.grid()
 
 plt.subplot(3, 1, 2)
+plt.plot(xf, 2.0 / n * np.abs(yf_clean[:n // 2]))
+plt.title('Cleaned Signal')
+
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude')
+plt.grid()
+
+plt.subplot(3, 1, 3)
+plt.plot(xf, difference)
+plt.title('Difference (Noise Removed)')
+
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Amplitude')
+plt.grid()
+
+plt.tight_layout()
+plt.show()
