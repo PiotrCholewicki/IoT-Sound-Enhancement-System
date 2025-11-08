@@ -1,21 +1,33 @@
 import numpy as np
-def group_frequencies(freqs, gap=50):
+
+def group_frequencies(freqs, gap=80, min_bandwidth=100):
     """
-    Group frequencies into bands where consecutive frequencies differ by less than 'gap' Hz.
+    Grupuje częstotliwości w pasma, gdzie kolejne punkty są bliżej niż `gap` Hz.
+    Wymusza też minimalną szerokość pasma `min_bandwidth`.
     """
     if len(freqs) == 0:
         return []
 
-    freqs = np.sort(freqs)  # sort frequencies in ascending order
+    freqs = np.sort(freqs)
     bands = []
     start = freqs[0]
     prev = freqs[0]
 
     for f in freqs[1:]:
+        # jeśli przerwa większa niż 'gap' -> kończymy bieżące pasmo
         if f - prev > gap:
+            # wymuszamy minimalną szerokość
+            if prev - start < min_bandwidth:
+                prev = start + min_bandwidth
             bands.append((start, prev))
             start = f
         prev = f
 
-    bands.append((start, prev))  # add the last band
+    # dodaj ostatnie pasmo
+    if prev - start < min_bandwidth:
+        prev = start + min_bandwidth
+    bands.append((start, prev))
+
+    # Usuwamy duplikaty i sortujemy
+    bands = sorted(set(bands))
     return bands

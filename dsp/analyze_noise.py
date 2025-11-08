@@ -35,4 +35,4 @@ def analyze_noise(file_path):
         intensity = np.mean(diff[idx])
         band_info.append({"range": b, "intensity": intensity})
 
-    return band_info, sr, xf, yf, yf_clean, diff
+    return band_info, sr, xf, yf, yf_clean, diff, y, y_clean

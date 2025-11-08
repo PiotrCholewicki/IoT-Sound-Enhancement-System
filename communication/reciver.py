@@ -4,13 +4,13 @@ import vlc
 import threading
 import uvicorn
 import os
-
+from dsp import audio_compensation
 app = FastAPI(title="Audio Receiver API")
 
 player = None
 isPlaying = False
 player_lock = threading.Lock()
-plik_docelowy = "odebrany_plik.mp3"
+received_file = "odebrany_plik.mp3"
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
@@ -21,10 +21,11 @@ async def upload_file(file: UploadFile = File(...)):
             player.stop()
 
         # Zapisz plik na dysk
-        with open(plik_docelowy, "wb") as f:
+        with open(received_file, "wb") as f:
             f.write(await file.read())
 
-        player = vlc.MediaPlayer(plik_docelowy)
+        audio_compensation()
+        player = vlc.MediaPlayer(received_file)
         player.play()
         isPlaying = True
 
@@ -39,6 +40,8 @@ async def command(cmd: str = Form(...)):
         return JSONResponse(status_code=400, content={"error": "Brak aktywnego odtwarzacza"})
 
     komenda = cmd.strip().lower()
+
+    #komendy idą z androida jako małe litery
     with player_lock:
         if komenda == "p":
             player.pause()
