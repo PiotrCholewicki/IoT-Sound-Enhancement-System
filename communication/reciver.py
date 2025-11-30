@@ -1,16 +1,26 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Body
 from fastapi.responses import JSONResponse
 import vlc
 import threading
 import uvicorn
 import os
-from dsp import audio_compensation
+import sys
+from dsp.main_dsp import dsp 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DSP_DIR = os.path.join(BASE_DIR, "dsp")
+AUDIO_DIR = os.path.join(DSP_DIR, "audio_files")
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
 app = FastAPI(title="Audio Receiver API")
 
 player = None
 isPlaying = False
 player_lock = threading.Lock()
-received_file = "odebrany_plik.mp3"
+received_file = os.path.join(AUDIO_DIR, "song_compensated.mp3")
+
+player = vlc.MediaPlayer(received_file)
+isPlaying = False
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
@@ -24,17 +34,19 @@ async def upload_file(file: UploadFile = File(...)):
         with open(received_file, "wb") as f:
             f.write(await file.read())
 
-        audio_compensation()
+        #start processing the file - do sprawdzenia czy na linuxie dziala bez tego importa
+        dsp(record_seconds=5, music_path=received_file)
+
+        #play processed file
         player = vlc.MediaPlayer(received_file)
-        player.play()
-        isPlaying = True
+        #player.play()
+        #isPlaying = True
 
     return {"status": "ok", "message": f"Odebrano i odtwarzam {file.filename}"}
 
 
 @app.post("/command")
-async def command(cmd: str = Form(...)):
-    global player, isPlaying
+async def command(cmd: str = Body(..., media_type="text/plain")):
 
     if player is None:
         return JSONResponse(status_code=400, content={"error": "Brak aktywnego odtwarzacza"})
