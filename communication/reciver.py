@@ -1,47 +1,104 @@
-from fastapi import FastAPI, UploadFile, File, Form, Body
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 import vlc
 import threading
 import uvicorn
 import os
+import asyncio
+from typing import Optional
+import traceback # Dodane dla lepszego debugowania
+from pathlib import Path # Dodane do zarządzania ścieżkami
+from fastapi import FastAPI, UploadFile, File, Form, Body
 import sys
-from dsp.main_dsp import dsp 
+from .dsp.main_dsp import dsp 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DSP_DIR = os.path.join(BASE_DIR, "dsp")
 AUDIO_DIR = os.path.join(DSP_DIR, "audio_files")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
+# --- Configuration ---
+# Target file path where the uploaded audio will be saved
+# Używamy ścieżki absolutnej w katalogu domowym użytkownika (~),
+# co gwarantuje uprawnienia do zapisu (zamiast bieżącego katalogu roboczego).
+HOME_DIR = Path.home()
+AUDIO_FILE_PATH = HOME_DIR / "temp_audio_receiver.mp3"
+
+# --- Global State ---
 app = FastAPI(title="Audio Receiver API")
 
-player = None
-isPlaying = False
-player_lock = threading.Lock()
+# Initialize VLC Instance bez flagi --aout=dummy.
+# Jest to konieczne do testowania realnego wyjścia audio.
+VLC_INSTANCE = vlc.Instance()
+player: Optional[vlc.MediaPlayer] = None
+is_playing: bool = False
+player_lock = threading.Lock() # Lock to protect global state access
 received_file = os.path.join(AUDIO_DIR, "song_compensated.mp3")
 
-player = vlc.MediaPlayer(received_file)
+# Helper function to initialize VLC and check for its presence
+def initialize_vlc_player(filepath: str):
+    """Stops the current player (if active) and starts a new one."""
+    global player, is_playing
+
+    # Stop current player if it exists
+    if player is not None:
+        player.stop()
+        player = None # Clear reference
+
+    # Create new player instance using the global VLC_INSTANCE
+    try:
+        # 1. Create Media object from the file path
+        # Ścieżka jest przekazywana jako string dla kompatybilności z vlc
+        media = VLC_INSTANCE.media_new(str(filepath))
+        # 2. Create the Player
+        player = VLC_INSTANCE.media_player_new()
+        # 3. Set the media source
+        player.set_media(media)
+    except Exception as e:
+        # Dodano pełny zrzut stosu do konsoli
+        traceback.print_exc()
+        print(f"ERROR: VLC Player initialization failed: {e}")
+        raise HTTPException(status_code=500, detail="VLC Player initialization failed. (Check file format or system dependencies)")
+
+# --- API Endpoints ---
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    global player, isPlaying
+async def upload_audio(file: UploadFile = File(...)):
+    """Receives an audio file, saves it, and begins playback."""
+    global player, is_playing
 
+    # Save the file to disk
+    try:
+        # FastAPI's async file read is efficient
+        file_content = await file.read()
+        # Używamy ścieżki absolutnej zdefiniowanej przez Pathlib
+        with open(AUDIO_FILE_PATH, "wb") as f:
+            f.write(file_content)
+    except Exception as e:
+        traceback.print_exc() # Dodano pełny zrzut stosu do konsoli
+        # Handle file I/O errors
+        raise HTTPException(status_code=500, detail=f"Error saving file: {e}. Check if user has write permissions to {AUDIO_FILE_PATH.parent}")
+
+    # Use the lock for thread-safe access to the global VLC player object
     with player_lock:
-        if isPlaying and player is not None:
-            player.stop()
+        try:
 
-        # Zapisz plik na dysk
-        with open(received_file, "wb") as f:
-            f.write(await file.read())
+            dsp(record_seconds=5, music_path=received_file)
+            # VLC playback command
+            #initialize_vlc_player(received_file)
+            player = vlc.MediaPlayer(received_file)
+            player.play()
+            is_playing = True
+            
+            return {"status": "success", "message": f"Received and playing: {file.filename}"}
 
-        #start processing the file - do sprawdzenia czy na linuxie dziala bez tego importa
-        dsp(record_seconds=5, music_path=received_file)
-
-        #play processed file
-        player = vlc.MediaPlayer(received_file)
-        #player.play()
-        #isPlaying = True
-
-    return {"status": "ok", "message": f"Odebrano i odtwarzam {file.filename}"}
+        except HTTPException as e:
+            # Re-raise initialization error
+            raise e
+        except Exception as e:
+            traceback.print_exc() # Dodano pełny zrzut stosu do konsoli
+            # Catch any other VLC-related errors
+            raise HTTPException(status_code=500, detail=f"VLC playback error: {e}. File might be corrupt or unsupported.")
 
 
 @app.post("/command")
@@ -83,16 +140,43 @@ async def command(cmd: str = Body(..., media_type="text/plain")):
 
 
 @app.get("/status")
-async def status():
-    global player, isPlaying
+async def get_status():
+    """Returns the current playback status."""
+    global player, is_playing
+    
     if player is None:
-        return {"playing": False}
-    return {
-        "playing": isPlaying,
-        "position_ms": player.get_time(),
-        "length_ms": player.get_length(),
-    }
+        return {"is_active": False, "message": "No media loaded."}
 
+    # VLC state check must be inside the lock if it's considered part of the shared state
+    with player_lock:
+        current_time_ms = player.get_time() if player else 0
+        total_length_ms = player.get_length() if player else 0
+        
+        # Check if playback is actually happening (VLC can be tricky)
+        player_state = player.get_state()
+        
+        # Upewnij się, że flaga is_playing jest false, gdy VLC faktycznie się zatrzyma
+        if player_state in (vlc.State.Stopped, vlc.State.Ended, vlc.State.Error):
+             is_playing = False
+        
+        is_actually_playing = player_state == vlc.State.Playing
+
+        return {
+            "is_active": True,
+            "is_playing": is_playing and is_actually_playing, # Combine internal flag with VLC state
+            "vlc_state": str(player_state),
+            "position_ms": current_time_ms,
+            "length_ms": total_length_ms,
+        }
+
+# --- Cleanup on Shutdown (optional but recommended) ---
+@app.on_event("shutdown")
+def shutdown_event():
+    global player
+    print("Shutting down player and cleaning up...")
+    if player is not None:
+        player.stop()
+        player = None
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

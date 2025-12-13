@@ -17,7 +17,7 @@ def record_audio(seconds):
         channels=CHANNELS,
         rate=RATE,
         input=True,
-        input_device_index=1,  # wybór mikrofonu
+        #input_device_index=0,  # wybór mikrofonu
         frames_per_buffer=FRAMES_PER_BUFFER
     )
 
