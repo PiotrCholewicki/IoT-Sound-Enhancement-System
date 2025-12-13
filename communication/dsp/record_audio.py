@@ -2,8 +2,6 @@ import pyaudio
 import wave
 import subprocess
 import os
-
-
         
 FRAMES_PER_BUFFER = 3200
 FORMAT = pyaudio.paInt16

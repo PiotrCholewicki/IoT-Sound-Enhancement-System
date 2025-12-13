@@ -20,7 +20,6 @@ player_lock = threading.Lock()
 received_file = os.path.join(AUDIO_DIR, "song_compensated.mp3")
 
 player = vlc.MediaPlayer(received_file)
-isPlaying = False
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
