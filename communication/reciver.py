@@ -10,6 +10,9 @@ import traceback # Dodane dla lepszego debugowania
 from pathlib import Path # Dodane do zarządzania ścieżkami
 from fastapi import FastAPI, UploadFile, File, Form, Body
 import sys
+import subprocess
+import re
+import time
 from .dsp.main_dsp import dsp 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -168,6 +171,121 @@ async def get_status():
             "position_ms": current_time_ms,
             "length_ms": total_length_ms,
         }
+    
+def bt_scan_worker(scan_time: int = 10) -> dict:
+    devices = {}
+    stop_event = threading.Event()
+
+    regex = re.compile(r"Device ([0-9A-F:]{17}) (.+)")
+
+    def reader(proc):
+        while not stop_event.is_set():
+            line = proc.stdout.readline()
+            if not line:
+                break
+
+            match = regex.search(line.strip())
+            if match:
+                mac, name = match.groups()
+                if mac not in devices:
+                    devices[mac] = name.strip()
+
+    process = subprocess.Popen(
+        ["bluetoothctl"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        bufsize=1
+    )
+
+    t = threading.Thread(target=reader, args=(process,), daemon=True)
+    t.start()
+
+    # inicjalizacja
+    process.stdin.write("power on\n")
+    process.stdin.write("agent on\n")
+    process.stdin.write("default-agent\n")
+    process.stdin.write("scan on\n")
+    process.stdin.flush()
+
+    time.sleep(scan_time)
+
+    stop_event.set()
+    process.stdin.write("scan off\n")
+    process.stdin.write("quit\n")
+    process.stdin.flush()
+
+    process.terminate()
+    t.join(timeout=1)
+
+    return devices
+
+def bt_connect_worker(mac: str, timeout: int = 15) -> bool:
+    process = subprocess.Popen(
+        ["bluetoothctl"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        bufsize=1
+    )
+
+    cmds = [
+        "power on",
+        "agent on",
+        "default-agent",
+        f"trust {mac}",
+        f"pair {mac}",
+        f"connect {mac}"
+    ]
+
+    for cmd in cmds:
+        process.stdin.write(cmd + "\n")
+        process.stdin.flush()
+        time.sleep(1)
+
+    start = time.time()
+    connected = False
+
+    while time.time() - start < timeout:
+        line = process.stdout.readline()
+        if not line:
+            break
+
+        line = line.lower()
+
+        if "connection successful" in line or "connected" in line:
+            connected = True
+            break
+
+        if "failed" in line or "error" in line:
+            break
+
+    process.stdin.write("quit\n")
+    process.stdin.flush()
+    process.terminate()
+
+    return connected
+
+@app.post("/bt/scan")
+async def bt_scan_endpoint():
+    devices = bt_scan_worker(scan_time=10)
+    return {
+        "count": len(devices),
+        "devices": devices
+    }
+
+@app.post("/bt/connect")
+async def bt_connect(mac: str = Body(..., embed=True)):
+    success = bt_connect_worker(mac)
+
+    if success:
+        return {"status": "connected", "mac": mac}
+
+    raise HTTPException(status_code=500, detail="Nie udało się połączyć z urządzeniem")
+
+
 
 # --- Cleanup on Shutdown (optional but recommended) ---
 @app.on_event("shutdown")
