@@ -87,7 +87,6 @@ def connect_to_wifi(ssid: str, password: str, ifname: str = "wlan1") -> bool:
         "device",
         "wifi",
         "connect", 
-        "ssid", 
         ssid,                      # Rzeczywista nazwa sieci               
         "password", 
         password,                  # Jawne zapisanie hasła                  
