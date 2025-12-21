@@ -7,6 +7,8 @@ import shlex
 import time
 import re
 import os
+import platform
+import socket
 
 print("start")
 
@@ -142,18 +144,34 @@ def connect_to_wifi(ssid: str, password: str, ifname: str = "wlan1") -> bool:
 # 🔧 Pobranie aktualnego statusu
 def get_wifi_status():
     try:
-        ssid = subprocess.run(["iwgetid", "-r", "wlan1"], capture_output=True, text=True).stdout.strip()
-        ip_out = subprocess.run(["ip", "addr", "show", "wlan1"], capture_output=True, text=True).stdout
-        ip_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)", ip_out)
-        ip = ip_match.group(1) if ip_match else "Brak adresu IP"
+        # Sprawdzamy czy to Windows, czy Linux
+        if platform.system() == "Windows":
+            # Symulacja statusu dla testów na Windowsie
+            hostname = socket.gethostname()
+            # Pobieramy lokalny adres IP na Windows
+            ip = socket.gethostbyname(hostname)
+            return {
+                "ssid": "Windows-Debug-Mode", 
+                "ip": ip, 
+                "signal": "N/A"
+            }
+        else:
+            # Oryginalny kod dla Raspberry Pi (Linux)
+            ssid_proc = subprocess.run(["iwgetid", "-r", "wlan1"], capture_output=True, text=True)
+            ssid = ssid_proc.stdout.strip()
+            
+            ip_out = subprocess.run(["ip", "addr", "show", "wlan1"], capture_output=True, text=True).stdout
+            ip_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)", ip_out)
+            ip = ip_match.group(1) if ip_match else "Brak adresu IP"
 
-        signal_out = subprocess.run(["iwconfig", "wlan1"], capture_output=True, text=True).stdout
-        signal_match = re.search(r"Signal level=(-?\d+) dBm", signal_out)
-        signal = f"{signal_match.group(1)} dBm" if signal_match else "Nieznany"
+            signal_out = subprocess.run(["iwconfig", "wlan1"], capture_output=True, text=True).stdout
+            signal_match = re.search(r"Signal level=(-?\d+) dBm", signal_out)
+            signal = f"{signal_match.group(1)} dBm" if signal_match else "Nieznany"
 
-        return {"ssid": ssid or "Niepołączony", "ip": ip, "signal": signal}
+            return {"ssid": ssid or "Niepołączony", "ip": ip, "signal": signal}
+            
     except Exception as e:
-        return {"ssid": "Błąd", "ip": str(e), "signal": "-"}
+        return {"ssid": "Błąd", "ip": f"Błąd systemowy: {str(e)}", "signal": "-"}
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
