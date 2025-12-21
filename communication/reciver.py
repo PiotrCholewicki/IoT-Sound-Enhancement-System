@@ -63,7 +63,7 @@ def initialize_vlc_player(filepath: str):
         print(f"ERROR: VLC Player initialization failed: {e}")
         raise HTTPException(status_code=500, detail="VLC Player initialization failed. (Check file format or system dependencies)")
 
-# --- API Endpoints ---
+# --- API Endpoints ---1
 
 @app.post("/upload")
 async def upload_audio(file: UploadFile = File(...)):
