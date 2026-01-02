@@ -2,12 +2,10 @@ package com.example.iot_mobile.ui.screen
 
 
 import android.content.Context
-import android.content.res.AssetFileDescriptor
-import android.os.Environment
 import android.util.Log
-import android.util.Log.e
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,9 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,7 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,11 +41,14 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.iot_mobile.loadTracksFromAssets
+import com.example.iot_mobile.data.loadTracksFromAssets
 import com.example.iot_mobile.network.fetchAndSavePiIp
 import com.example.iot_mobile.network.getSavedPiIp
 import com.example.iot_mobile.network.getUploadUrl
 import com.example.iot_mobile.R
+import com.example.iot_mobile.data.BluetoothDeviceDto
+import com.example.iot_mobile.network.connectBluetoothDevice
+import com.example.iot_mobile.network.fetchBluetoothDevices
 
 import com.example.iot_mobile.viewmodel.MusicPlayerViewModel
 
@@ -53,23 +56,15 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
-import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
+
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.http.content.TextContent
+
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.w3c.dom.Text
-import java.io.File
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import org.json.JSONObject
-import java.net.URL
 
 @Composable
 fun MainScreen(
@@ -82,7 +77,9 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         fetchAndSavePiIp(context)
     }
-
+    var showBtDialog = remember { mutableStateOf(false) }
+    val btDevices = remember { mutableStateOf<List<BluetoothDeviceDto>>(emptyList()) }
+    val loadingBt = remember { mutableStateOf(false) }
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = modifier
@@ -96,16 +93,76 @@ fun MainScreen(
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+//                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(R.string.list_of_audio_tracks),
                     fontSize = 24.sp, // Larger font for title
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary // Theme primary color for title
+                    color = MaterialTheme.colorScheme.primary, // Theme primary color for title
+                    modifier = Modifier.weight(1f)
+                )
+                Card(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable { showBtDialog.value = true },
+                    shape = MaterialTheme.shapes.medium,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.bluetooth),
+                            contentDescription = "Bluetooth",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+            }
+            if (showBtDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { showBtDialog.value = false },
+                    title = { Text("Urządzenia Bluetooth") },
+                    text = {
+                        if (loadingBt.value) {
+                            Text("Skanowanie...")
+                        } else {
+                            LazyColumn {
+                                items(btDevices.value) { device ->
+                                    Text(
+                                        text = "${device.name} (${device.mac})",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                CoroutineScope(Dispatchers.IO).launch {
+                                                    connectBluetoothDevice(context, device.mac)
+                                                }
+                                                showBtDialog.value = false
+                                            }
+                                            .padding(8.dp)
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            loadingBt.value = true
+                            CoroutineScope(Dispatchers.IO).launch {
+                                btDevices.value = fetchBluetoothDevices(context)
+                                loadingBt.value = false
+                            }
+                        }) {
+                            Text("Skanuj")
+                        }
+                    }
                 )
             }
-
+                }
             // MIDDLE BAR (LazyColumn for Files Display)
             FilesDisplay(
                 modifier = Modifier
@@ -127,7 +184,7 @@ fun MainScreen(
 
 @Composable
 fun Footer(musicPlayerViewModel: MusicPlayerViewModel) {
-    val context = LocalContext.current
+
     val isPlaying by musicPlayerViewModel.isPlaying.collectAsState()
     val currentPosition by musicPlayerViewModel.currentPosition.collectAsState()
     val totalDuration by musicPlayerViewModel.totalDuration.collectAsState()
@@ -215,7 +272,7 @@ fun FilesDisplay(
                     .clickable {
                         if (currentFile != track.assetPath) {
                             musicPlayerViewModel.playFile(track.assetPath)
-
+                            fetchAndSavePiIp(context)
                             CoroutineScope(Dispatchers.IO).launch {
                                 sendAssetToServer(context, track.assetPath)
                             }

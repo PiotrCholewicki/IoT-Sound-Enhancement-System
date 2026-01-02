@@ -1,4 +1,4 @@
-package com.example.iot_mobile
+package com.example.iot_mobile.data
 
 import android.content.Context
 

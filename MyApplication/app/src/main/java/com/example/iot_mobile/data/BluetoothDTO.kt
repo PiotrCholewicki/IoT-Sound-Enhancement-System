@@ -11,3 +11,8 @@ data class BtScanResponse(
     val count: Int,
     val devices: Map<String, String>
 )
+
+@Serializable
+data class BtConnectRequest(
+    val mac: String
+)

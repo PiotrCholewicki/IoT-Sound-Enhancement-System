@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -71,4 +72,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:1.16.0")
 
     implementation("androidx.compose.runtime:runtime-livedata:1.4.3")
+
 }

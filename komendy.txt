@@ -1,0 +1,8 @@
+#aktywacja wifi
+nmcli device wifi connect NETIASPOT-B96810 password eitbjcwihk3h 
+
+#aktywacja app.py
+sudo .venv/bin/python -m uvicorn communication.app:app --host 0.0.0.0 --port=8000
+
+#aktywacja reciver.py
+sudo .venv/bin/python -m uvicorn communication.reciver:app --host 0.0.0.0 --port=8002

@@ -39,10 +39,9 @@ fun getSavedPiIp(context: Context): String? {
 
 fun getUploadUrl(context: Context): String{
     val ip = getSavedPiIp(context)
-
-    return "http://"+ip+":8000/upload"
+    return "http://"+ip+":8002/upload"
 }
 fun getCommandUrl(context: Context): String{
     val ip = getSavedPiIp(context)
-    return "http://"+ip+":8000/command"
+    return "http://"+ip+":8002/command"
 }
