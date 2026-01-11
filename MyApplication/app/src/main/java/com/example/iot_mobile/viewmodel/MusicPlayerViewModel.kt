@@ -148,6 +148,22 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         }
 
     }
+    //funkcja wstrzymująca odtwarzanie
+    suspend fun sendCalibrateRequest() {
+        val client = HttpClient(OkHttp) {
+            install(ContentNegotiation) { json() }
+        }
+        try {
+            val response = client.post(serverContentUrl) {
+                setBody(TextContent("c", ContentType.Text.Plain))
+            }
+            Log.d("COMMAND", "Sukces, wysyłam prośbę o kalibrację mikrofonu")
+        } catch (e: Exception) {
+            Log.e("COMMAND", "Problem w wysyłaniu requesta o kalibrację mikrofonu")
+        } finally {
+            client.close()
+        }
+    }
 
 
 }

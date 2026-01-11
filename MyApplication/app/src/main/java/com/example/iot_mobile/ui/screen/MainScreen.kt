@@ -80,6 +80,7 @@ fun MainScreen(
     var showBtDialog = remember { mutableStateOf(false) }
     val btDevices = remember { mutableStateOf<List<BluetoothDeviceDto>>(emptyList()) }
     val loadingBt = remember { mutableStateOf(false) }
+    val showCalibrationDialog = remember { mutableStateOf(false) }
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = modifier
@@ -92,16 +93,17 @@ fun MainScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-//                horizontalArrangement = Arrangement.Center
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = stringResource(R.string.list_of_audio_tracks),
-                    fontSize = 24.sp, // Larger font for title
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary, // Theme primary color for title
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
+
+                // BLUETOOTH
                 Card(
                     modifier = Modifier
                         .size(40.dp)
@@ -122,6 +124,38 @@ fun MainScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // MICROPHONE
+                Card(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                viewModel.sendCalibrateRequest()
+                                showCalibrationDialog.value = true
+                            }
+                        },
+                    shape = MaterialTheme.shapes.medium,
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.mic),
+                            contentDescription = "Kalibracja mikrofonu",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
             }
             if (showBtDialog.value) {
                 AlertDialog(
@@ -162,7 +196,28 @@ fun MainScreen(
                     }
                 )
             }
+            if (showCalibrationDialog.value) {
+                AlertDialog(
+                    onDismissRequest = { showCalibrationDialog.value = false },
+                    title = {
+                        Text(
+                            text = "Kalibracja mikrofonu",
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Text("Czekaj...")
+                    },
+                    confirmButton = {}
+                )
+
+                // auto-zamykanie po 5 sekundach
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(3000)
+                    showCalibrationDialog.value = false
                 }
+            }
+
             // MIDDLE BAR (LazyColumn for Files Display)
             FilesDisplay(
                 modifier = Modifier

@@ -14,6 +14,7 @@ import subprocess
 import re
 import time
 from .dsp.main_dsp import dsp 
+from .dsp.calibrate_microphone import calibrate_microphone
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DSP_DIR = os.path.join(BASE_DIR, "dsp")
@@ -86,7 +87,7 @@ async def upload_audio(file: UploadFile = File(...)):
     with player_lock:
         try:
 
-            dsp(record_seconds=5, music_path=received_file)
+            dsp(record_seconds=2, music_path=received_file)
             # VLC playback command
             #initialize_vlc_player(received_file)
             player = vlc.MediaPlayer(received_file)
@@ -138,6 +139,16 @@ async def command(cmd: str = Body(..., media_type="text/plain")):
             player.stop()
             isPlaying = False
             return {"status": "stopped"}
+        elif komenda =="c":
+            calibration_file="dsp/audio_files/mic_calibration.txt"
+            if os.path.exists(calibration_file):
+                os.remove(calibration_file)
+                print("[DSP] Usunięto plik kalibracji mikrofonu.")
+            else:
+                print("[DSP] Brak pliku kalibracji - wykonuję nową.")
+                os.remove(calibration_file)
+            calibrate_microphone()
+
         else:
             return JSONResponse(status_code=400, content={"error": "Nieznana komenda"})
 
@@ -270,7 +281,7 @@ def bt_connect_worker(mac: str, timeout: int = 15) -> bool:
 
 @app.post("/bt/scan")
 async def bt_scan_endpoint():
-    devices = bt_scan_worker(scan_time=10)
+    devices = await asyncio.to_thread(bt_scan_worker(scan_time=10))
     return {
         "count": len(devices),
         "devices": devices
