@@ -2,7 +2,7 @@ from .record_audio import record_audio
 from .analyze_noise import analyze_noise
 from .audio_compensation import audio_compensation
 from .plot_spectrogram import plot_spectrogram
-
+from pathlib import Path
 
 def dsp(record_seconds=5, music_path="odebrany_plik.mp3"):
     """
@@ -11,8 +11,10 @@ def dsp(record_seconds=5, music_path="odebrany_plik.mp3"):
     2. Analizuje pasma szumu
     3. Wzmacnia zewnętrzny plik muzyczny na podstawie szumu
     """
-    noise_file = record_audio(record_seconds)
+    BASE_DSP_DIR = Path(__file__).parent
+    noise_file = str(BASE_DSP_DIR / "audio_files" / "output.mp3")
 
+    #noise_file = "./dsp/audio_files/output.mp3"
     print("Analiza szumu...")
     band_info, sr, xf, yf, yf_clean, diff, y, y_clean = analyze_noise(noise_file)
 

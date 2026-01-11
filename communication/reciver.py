@@ -270,7 +270,7 @@ def bt_connect_worker(mac: str, timeout: int = 15) -> bool:
 
 @app.post("/bt/scan")
 async def bt_scan_endpoint():
-    devices = bt_scan_worker(scan_time=10)
+    devices = await asyncio.to_thread(bt_scan_worker, 10)
     return {
         "count": len(devices),
         "devices": devices
