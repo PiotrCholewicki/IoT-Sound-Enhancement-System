@@ -6,7 +6,7 @@ import os
 FRAMES_PER_BUFFER = 3200
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
-RATE = 41000
+RATE = 44100
 def record_audio(seconds):
 
     """Records audio from the microphone and saves it as output.mp3"""
@@ -17,7 +17,7 @@ def record_audio(seconds):
         channels=CHANNELS,
         rate=RATE,
         input=True,
-        #input_device_index=0,  # wybór mikrofonu
+        input_device_index=1,  # wybór mikrofonu
         frames_per_buffer=FRAMES_PER_BUFFER
     )
 

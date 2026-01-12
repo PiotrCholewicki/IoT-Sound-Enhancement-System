@@ -1,3 +1,10 @@
-from communication.dsp import main_dsp
-main_dsp.dsp()
+import pyaudio
 
+p = pyaudio.PyAudio()
+
+for i in range(p.get_device_count()):
+    info = p.get_device_info_by_index(i)
+    if info['maxInputChannels'] > 0:
+        print(f"INDEX {i}: {info['name']} | kanały: {info['maxInputChannels']}")
+
+p.terminate()

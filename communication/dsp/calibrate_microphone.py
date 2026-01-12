@@ -2,7 +2,7 @@ import numpy as np
 import librosa
 import os
 
-def calibrate_microphone(record_seconds=5, output_file="communication/dsp/audio_files/mic_calibration.txt"):
+def calibrate_microphone(record_seconds=3, output_file="communication/dsp/audio_files/mic_calibration.txt"):
     """
     Nagrywa ciszę i zapisuje RMS mikrofonu jako punkt zerowy.
     """

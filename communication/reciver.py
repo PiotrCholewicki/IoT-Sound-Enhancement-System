@@ -19,6 +19,7 @@ from .dsp.calibrate_microphone import calibrate_microphone
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DSP_DIR = os.path.join(BASE_DIR, "dsp")
 AUDIO_DIR = os.path.join(DSP_DIR, "audio_files")
+CALIBRATION_FILE = os.path.join(DSP_DIR, "mic_calibration.txt")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # --- Configuration ---
@@ -33,76 +34,105 @@ app = FastAPI(title="Audio Receiver API")
 
 # Initialize VLC Instance bez flagi --aout=dummy.
 # Jest to konieczne do testowania realnego wyjścia audio.
-VLC_INSTANCE = vlc.Instance()
-player: Optional[vlc.MediaPlayer] = None
+# wymuszenie PulseAudio zamiast ALSA
+instance = vlc.Instance('--aout=pulse')  
+player = instance.media_player_new()
+
 is_playing: bool = False
 player_lock = threading.Lock() # Lock to protect global state access
-received_file = os.path.join(AUDIO_DIR, "song_compensated.mp3")
+received_file = os.path.join(AUDIO_DIR, "song_adaptive.wav")
 
 # Helper function to initialize VLC and check for its presence
 def initialize_vlc_player(filepath: str):
     """Stops the current player (if active) and starts a new one."""
-    global player, is_playing
+    global player, is_playing, instance
 
     # Stop current player if it exists
     if player is not None:
         player.stop()
-        player = None # Clear reference
+        player = None  # Clear reference
 
-    # Create new player instance using the global VLC_INSTANCE
     try:
-        # 1. Create Media object from the file path
-        # Ścieżka jest przekazywana jako string dla kompatybilności z vlc
-        media = VLC_INSTANCE.media_new(str(filepath))
-        # 2. Create the Player
-        player = VLC_INSTANCE.media_player_new()
-        # 3. Set the media source
+        media = instance.media_new(str(filepath))  # <-- używamy globalnej instance
+        player = instance.media_player_new()
         player.set_media(media)
     except Exception as e:
-        # Dodano pełny zrzut stosu do konsoli
         traceback.print_exc()
-        print(f"ERROR: VLC Player initialization failed: {e}")
-        raise HTTPException(status_code=500, detail="VLC Player initialization failed. (Check file format or system dependencies)")
+        raise HTTPException(status_code=500, detail="VLC Player initialization failed")
 
 # --- API Endpoints ---1
 
+# @app.post("/upload")
+# async def upload_audio(file: UploadFile = File(...)):
+#     """Receives an audio file, saves it, and begins playback."""
+#     global player, is_playing
+
+#     # Save the file to disk
+#     try:
+#         # FastAPI's async file read is efficient
+#         file_content = await file.read()
+#         # Używamy ścieżki absolutnej zdefiniowanej przez Pathlib
+#         with open(AUDIO_FILE_PATH, "wb") as f:
+#             f.write(file_content)
+#     except Exception as e:
+#         traceback.print_exc() # Dodano pełny zrzut stosu do konsoli
+#         # Handle file I/O errors
+#         raise HTTPException(status_code=500, detail=f"Error saving file: {e}. Check if user has write permissions to {AUDIO_FILE_PATH.parent}")
+
+#     # Use the lock for thread-safe access to the global VLC player object
+#     with player_lock:
+#         try:
+
+#             dsp(record_seconds=2, music_path=received_file)
+#             # VLC playback command
+
+#             initialize_vlc_player(received_file)
+#             player.play()
+#             is_playing = True
+            
+#             return {"status": "success", "message": f"Received and playing: {file.filename}"}
+
+#         except HTTPException as e:
+#             # Re-raise initialization error
+#             raise e
+#         except Exception as e:
+#             traceback.print_exc() # Dodano pełny zrzut stosu do konsoli
+#             # Catch any other VLC-related errors
+#             raise HTTPException(status_code=500, detail=f"VLC playback error: {e}. File might be corrupt or unsupported.")
 @app.post("/upload")
 async def upload_audio(file: UploadFile = File(...)):
-    """Receives an audio file, saves it, and begins playback."""
+    """Receives an audio file, saves it, processes with DSP, and begins playback."""
     global player, is_playing
 
-    # Save the file to disk
+    # 1️. Zapis przesłanego pliku
     try:
-        # FastAPI's async file read is efficient
         file_content = await file.read()
-        # Używamy ścieżki absolutnej zdefiniowanej przez Pathlib
         with open(AUDIO_FILE_PATH, "wb") as f:
             f.write(file_content)
     except Exception as e:
-        traceback.print_exc() # Dodano pełny zrzut stosu do konsoli
-        # Handle file I/O errors
-        raise HTTPException(status_code=500, detail=f"Error saving file: {e}. Check if user has write permissions to {AUDIO_FILE_PATH.parent}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error saving file: {e}")
 
-    # Use the lock for thread-safe access to the global VLC player object
+    # 2️. Przetwarzanie pliku przez DSP
+    processed_file = os.path.join(AUDIO_DIR, "song_adaptive.wav")
+    try:
+        dsp(record_seconds=2, music_path=str(AUDIO_FILE_PATH))
+        # Uwaga: dsp() musi mieć możliwość zapisania wyniku do output_path
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"DSP processing failed: {e}")
+
+    # 3️. Odtwarzanie przetworzonego pliku
     with player_lock:
         try:
-
-            dsp(record_seconds=2, music_path=received_file)
-            # VLC playback command
-            #initialize_vlc_player(received_file)
-            player = vlc.MediaPlayer(received_file)
+            initialize_vlc_player(processed_file)
             player.play()
             is_playing = True
-            
-            return {"status": "success", "message": f"Received and playing: {file.filename}"}
-
-        except HTTPException as e:
-            # Re-raise initialization error
-            raise e
         except Exception as e:
-            traceback.print_exc() # Dodano pełny zrzut stosu do konsoli
-            # Catch any other VLC-related errors
-            raise HTTPException(status_code=500, detail=f"VLC playback error: {e}. File might be corrupt or unsupported.")
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"VLC playback error: {e}")
+
+    return {"status": "success", "message": f"Received and playing: {file.filename}"}
 
 
 @app.post("/command")
@@ -140,14 +170,19 @@ async def command(cmd: str = Body(..., media_type="text/plain")):
             isPlaying = False
             return {"status": "stopped"}
         elif komenda =="c":
-            calibration_file="dsp/audio_files/mic_calibration.txt"
-            if os.path.exists(calibration_file):
-                os.remove(calibration_file)
-                print("[DSP] Usunięto plik kalibracji mikrofonu.")
-            else:
-                print("[DSP] Brak pliku kalibracji - wykonuję nową.")
-                os.remove(calibration_file)
+            
+            print("[DSP] Żądanie kalibracji mikrofonu")
+
+            if os.path.exists(CALIBRATION_FILE):
+                os.remove(CALIBRATION_FILE)
+                print("[DSP] Usunięto stary plik kalibracji")
+
+            # ZAWSZE wykonuj kalibrację
             calibrate_microphone()
+
+            return JSONResponse(
+                content={"status": "ok", "message": "Kalibracja mikrofonu wykonana"}
+            )
 
         else:
             return JSONResponse(status_code=400, content={"error": "Nieznana komenda"})
@@ -281,7 +316,7 @@ def bt_connect_worker(mac: str, timeout: int = 15) -> bool:
 
 @app.post("/bt/scan")
 async def bt_scan_endpoint():
-    devices = await asyncio.to_thread(bt_scan_worker(scan_time=10))
+    devices = await asyncio.to_thread(bt_scan_worker, scan_time=10)
     return {
         "count": len(devices),
         "devices": devices
