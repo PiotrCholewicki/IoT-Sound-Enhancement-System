@@ -134,8 +134,9 @@ fun MainScreen(
                         .size(40.dp)
                         .clickable {
                             CoroutineScope(Dispatchers.IO).launch {
-                                viewModel.sendCalibrateRequest()
                                 showCalibrationDialog.value = true
+                                viewModel.sendCalibrateRequest()
+
                             }
                         },
                     shape = MaterialTheme.shapes.medium,
@@ -288,8 +289,10 @@ fun Footer(musicPlayerViewModel: MusicPlayerViewModel) {
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 onClick = {
-                    musicPlayerViewModel.stopPlayback()
-                    //fetchAndSavePiIp(context)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        musicPlayerViewModel.stopPlayback()
+                        //fetchAndSavePiIp(context)
+                    }
 
                 },
                 modifier = Modifier.padding(horizontal = 4.dp)

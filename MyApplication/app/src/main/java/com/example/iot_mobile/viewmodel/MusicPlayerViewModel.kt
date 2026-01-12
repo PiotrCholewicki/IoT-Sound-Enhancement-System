@@ -96,9 +96,10 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    fun stopPlayback() {
+    suspend fun stopPlayback() {
         mediaPlayer?.stop()
         mediaPlayer?.release()
+        this.sendTerminateRequest();
         mediaPlayer = null
         _isPlaying.value = false
         _currentFile.value = null
@@ -110,9 +111,26 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         _currentPosition.value = position
     }
 
-
-
     //funkcja wstrzymująca odtwarzanie
+    suspend fun sendTerminateRequest(){
+        val client = HttpClient(OkHttp) {
+            install(ContentNegotiation) { json() }
+        }
+        try{
+            val response = client.post(serverContentUrl){
+                setBody(TextContent("q", ContentType.Text.Plain))}
+            Log.d("COMMAND", "Sukces, wysyłam prośbę o skonczenie ")
+        }
+        catch(e: Exception){
+            Log.e("COMMAND", "Problem w wysyłaniu komunikatu o zatrzymanie")
+        }
+        finally {
+            client.close()
+        }
+
+    }
+
+    //funkcja zatrzymujaca odtwarzanie
     suspend fun sendStopRequest(){
         val client = HttpClient(OkHttp) {
             install(ContentNegotiation) { json() }
