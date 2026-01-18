@@ -1,0 +1,79 @@
+
+[AGC] Szum niski (-63.7 dB) | Δ=-1.7 dB → brak wzmocnienia
+[AGC] Szum niski (-60.0 dB) | Δ=2.0 dB → brak wzmocnienia
+[AGC] Szum niski (-61.1 dB) | Δ=0.9 dB → brak wzmocnienia
+
+[AGC] Szum niski (-60.2 dB) | Δ=1.8 dB → brak wzmocnienia
+
+[AGC] Szum niski (-58.1 dB) | Δ=3.9 dB → brak wzmocnienia
+[AGC] Szum: -42.4 dB | Δ=19.6 dB | gain: +3.35 dB | x=0.65%
+[AGC] Szum: -38.3 dB | Δ=23.6 dB | gain: +3.63 dB | x=0.79%
+[AGC] Szum: -27.8 dB | Δ=34.2 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum: -37.9 dB | Δ=24.1 dB | gain: +3.66 dB | x=0.80%
+[AGC] Szum: -41.7 dB | Δ=20.2 dB | gain: +3.40 dB | x=0.67%
+[AGC] Szum: -41.9 dB | Δ=20.1 dB | gain: +3.39 dB | x=0.67%
+[AGC] Szum: -44.9 dB | Δ=17.0 dB | gain: +3.15 dB | x=0.57%
+[AGC] Szum: -38.3 dB | Δ=23.7 dB | gain: +3.64 dB | x=0.79%
+[AGC] Szum: -48.1 dB | Δ=13.9 dB | gain: +2.86 dB | x=0.46%
+[AGC] Szum: -47.2 dB | Δ=14.8 dB | gain: +2.94 dB | x=0.49%
+[AGC] Szum: -47.1 dB | Δ=14.8 dB | gain: +2.95 dB | x=0.49%
+[AGC] Szum: -32.7 dB | Δ=29.3 dB | gain: +3.96 dB | x=0.98%
+[AGC] Szum: -47.5 dB | Δ=14.5 dB | gain: +2.92 dB | x=0.48%
+[AGC] Szum: -46.5 dB | Δ=15.5 dB | gain: +3.01 dB | x=0.52%
+[AGC] Szum: -47.3 dB | Δ=14.7 dB | gain: +2.93 dB | x=0.49%
+[AGC] Szum: -28.4 dB | Δ=33.6 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum: -28.4 dB | Δ=33.6 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum: -28.2 dB | Δ=33.8 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum: -12.4 dB | Δ=49.6 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum: -27.9 dB | Δ=34.1 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -22.2 dB | Δ=39.7 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -22.0 dB | Δ=40.0 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -22.1 dB | Δ=39.9 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -17.2 dB | Δ=44.8 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -14.7 dB | Δ=47.3 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -22.0 dB | Δ=40.0 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -17.6 dB | Δ=44.4 dB | gain: +4.00 dB | x=1.00%
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-178.0 dB → brak wzmocnienia
+[AGC] Szum: -35.8 dB | Δ=10.5 dB | gain: +2.47 dB | x=0.35%
+[AGC] Szum: -36.2 dB | Δ=10.0 dB | gain: +2.41 dB | x=0.33%
+[AGC] Szum: -40.2 dB | Δ=6.1 dB | gain: +1.80 dB | x=0.20%
+[AGC] Szum: -41.1 dB | Δ=5.2 dB | gain: +1.63 dB | x=0.17%
+[AGC] Szum: -39.3 dB | Δ=7.0 dB | gain: +1.96 dB | x=0.23%
+[AGC] Szum niski (-44.9 dB) | Δ=1.4 dB → brak wzmocnienia
+[AGC] Szum niski (-46.5 dB) | Δ=-0.2 dB → brak wzmocnienia
+[AGC] Szum: -40.8 dB | Δ=5.5 dB | gain: +1.69 dB | x=0.18%
+[AGC] Szum niski (-50.9 dB) | Δ=-4.6 dB → brak wzmocnienia
+[AGC] Szum: -34.5 dB | Δ=11.7 dB | gain: +2.62 dB | x=0.39%
+[AGC] Szum: -37.4 dB | Δ=8.9 dB | gain: +2.26 dB | x=0.30%
+[AGC] Szum: -39.8 dB | Δ=6.5 dB | gain: +1.88 dB | x=0.22%
+[AGC] Szum niski (-41.7 dB) | Δ=4.5 dB → brak wzmocnienia
+[AGC] Szum niski (-43.1 dB) | Δ=3.1 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=0.0 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-216.7 dB → brak wzmocnienia
+[AGC] Szum: -32.8 dB | Δ=8.3 dB | gain: +2.18 dB | x=0.28%
+[AGC] Szum niski (-55.0 dB) | Δ=-13.8 dB → brak wzmocnienia
+[AGC] Szum niski (-44.2 dB) | Δ=-3.0 dB → brak wzmocnienia
+[AGC] Szum: -43.5 dB | Δ=5.6 dB | gain: +1.72 dB | x=0.19%
+[AGC] Szum: -36.9 dB | Δ=12.1 dB | gain: +2.67 dB | x=0.40%
+[AGC] Szum niski (-38.5 dB) | Δ=-3.9 dB → brak wzmocnienia
+[AGC] Szum niski (-42.2 dB) | Δ=-1.6 dB → brak wzmocnienia
+[AGC] Szum niski (-36.7 dB) | Δ=3.9 dB → brak wzmocnienia
+[AGC] Szum: -30.4 dB | Δ=10.1 dB | gain: +2.43 dB | x=0.34%
+[AGC] Szum niski (-240.0 dB) | Δ=-199.5 dB → brak wzmocnienia
+[AGC] Szum niski (-240.0 dB) | Δ=-199.5 dB → brak wzmocnienia

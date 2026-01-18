@@ -27,22 +27,28 @@ def adaptive_gain_control(music_file, noise_rms_db, rms_ref_db, output_file):
 
     # 3️⃣ Różnica RMS szumu
     delta_db = noise_rms_db - rms_ref_db
-    
+    message = ""
     if delta_db < MIN_DELTA_DB:
         gain_db = 0.0
         print(f"[AGC] Szum niski ({delta_db:.1f} dB) → brak wzmocnienia")
+        message = f"[AGC] Szum niski ({noise_rms_db:.1f} dB) | Δ={delta_db:.1f} dB → brak wzmocnienia"
     else:
 
         # nieliniowa krzywa (łagodna)
         x = np.clip(delta_db / FULL_NOISE_DB, 0.0, 1.0)
         gain_db = MAX_GAIN_DB * np.log10(1 + 9 * x)
 
-        print(
-            f"[AGC] Szum: {noise_rms_db:.1f} dB | "
-            f"Δ={delta_db:.1f} dB | "
-            f"gain: +{gain_db:.2f} dB | "
-            f"x={x:.2f}%"
-        )
+
+
+        message = f"[AGC] Szum: {noise_rms_db:.1f} dB | " \
+                f"Δ={delta_db:.1f} dB | " \
+                f"gain: +{gain_db:.2f} dB | " \
+                f"x={x:.2f}%"
+
+    print(message)  # konsola
+
+    with open("dsp_agc_log.txt", "a") as f:  # dopisujemy
+        f.write(message + "\n")
 
     # 4️⃣ Przeliczenie gain na wartość liniową
     gain_lin = 10 ** (gain_db / 20)
