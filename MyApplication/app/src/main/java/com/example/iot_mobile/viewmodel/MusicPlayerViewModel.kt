@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.iot_mobile.network.getCommandUrl
+import com.example.iot_mobile.ui.screen.sendAssetToServer
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -27,7 +28,7 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
 
     private val serverContentUrl: String
         get() = getCommandUrl(context)
-    private var mediaPlayer: MediaPlayer? = null
+
 
     private val _currentFile = MutableStateFlow<String?>(null)
     val currentFile = _currentFile.asStateFlow()
@@ -40,76 +41,52 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _totalDuration = MutableStateFlow(0)
     val totalDuration = _totalDuration.asStateFlow()
+    private val _status = MutableStateFlow("IDLE")
+    val status = _status.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            while (true) {
-                delay(1000L)
-                mediaPlayer?.let {
-                    if (_isPlaying.value) {
-                        _currentPosition.value = it.currentPosition
-                    }
-                }
-            }
-        }
-    }
 
     fun playFile(fileName: String) {
-        try {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
+        viewModelScope.launch {
+            try {
 
-            val afd: AssetFileDescriptor = assetManager.openFd(fileName)
-            val player = MediaPlayer()
-            player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-            player.prepare()
-            player.start()
+                _status.value = "Uploading..."
+                sendAssetToServer(context, fileName)
 
-            _totalDuration.value = player.duration
-            _currentFile.value = fileName
-            _isPlaying.value = true
-            mediaPlayer = player
+                _status.value = "Playing"
+                sendResumeRequest()
 
-            player.setOnCompletionListener {
-                it.release()
-                _isPlaying.value = false
-                _currentFile.value = null
-                mediaPlayer = null
-            }
-
-        } catch (e: Exception) {
-            Log.e("ViewModel", "Playback error: ${e.message}", e)
-        }
-    }
-
-    suspend fun togglePlayPause() {
-        mediaPlayer?.let {
-            if (_isPlaying.value) {
-                it.pause()
-                this.sendStopRequest()
-                _isPlaying.value = false
-            } else {
-                it.start()
-                this.sendResumeRequest()
+                _currentFile.value = fileName
                 _isPlaying.value = true
+            } catch (e: Exception) {
+                _status.value = "Error"
             }
         }
     }
 
-    suspend fun stopPlayback() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        this.sendTerminateRequest();
-        mediaPlayer = null
-        _isPlaying.value = false
-        _currentFile.value = null
-        _currentPosition.value = 0
+    fun togglePlayPause() {
+        viewModelScope.launch {
+            if (_isPlaying.value) {
+                sendStopRequest()
+                _isPlaying.value = false
+                _status.value = "Paused"
+            } else {
+                sendResumeRequest()
+                _isPlaying.value = true
+                _status.value = "Playing"
+            }
+        }
     }
 
-    fun seekTo(position: Int) {
-        mediaPlayer?.seekTo(position)
-        _currentPosition.value = position
+    fun stopPlayback() {
+        viewModelScope.launch {
+            sendTerminateRequest()
+            _isPlaying.value = false
+            _currentFile.value = null
+            _status.value = "Stopped"
+        }
     }
+
+
 
     //funkcja wstrzymująca odtwarzanie
     suspend fun sendTerminateRequest(){

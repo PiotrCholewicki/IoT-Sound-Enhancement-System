@@ -239,70 +239,35 @@ fun MainScreen(
 }
 
 @Composable
-fun Footer(musicPlayerViewModel: MusicPlayerViewModel) {
+fun Footer(viewModel: MusicPlayerViewModel) {
 
-    val isPlaying by musicPlayerViewModel.isPlaying.collectAsState()
-    val currentPosition by musicPlayerViewModel.currentPosition.collectAsState()
-    val totalDuration by musicPlayerViewModel.totalDuration.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 8.dp), // Added top padding to separate from list
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.Center
     ) {
-        Slider(
-            value = if (totalDuration > 0) currentPosition.toFloat() / totalDuration else 0f,
-            onValueChange = {
-                val newPos = (it * totalDuration).toInt()
-                musicPlayerViewModel.seekTo(newPos)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            colors = androidx.compose.material3.SliderDefaults.colors(
-                thumbColor = MaterialTheme.colorScheme.primary,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        Button(onClick = { viewModel.togglePlayPause() }) {
+            Icon(
+                imageVector = if (isPlaying)
+                    ImageVector.vectorResource(R.drawable.pause_button)
+                else
+                    ImageVector.vectorResource(R.drawable.play_button),
+                contentDescription = if (isPlaying) "Pause" else "Play",
+                tint = MaterialTheme.colorScheme.onPrimary
             )
-        )
-        Spacer(modifier = Modifier.height(8.dp)) // Spacer between slider and buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center, // Center buttons
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
+        }
 
-                onClick = {CoroutineScope(Dispatchers.IO).launch {
-                    musicPlayerViewModel.togglePlayPause()}
-                    //fetchAndSavePiIp(context)
-                  },
-                modifier = Modifier.padding(horizontal = 4.dp)
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) ImageVector.vectorResource(R.drawable.pause_button) else ImageVector.vectorResource(R.drawable.play_button),
-                    contentDescription = if (isPlaying) "Pause" else "Play",
-                    tint = MaterialTheme.colorScheme.onPrimary // Icon color
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        musicPlayerViewModel.stopPlayback()
-                        //fetchAndSavePiIp(context)
-                    }
+        Spacer(modifier = Modifier.width(16.dp))
 
-                },
-                modifier = Modifier.padding(horizontal = 4.dp)
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.stop_button),
-                    contentDescription = "Stop",
-                    tint = MaterialTheme.colorScheme.onPrimary // Icon color
-                )
-            }
+        Button(onClick = { viewModel.stopPlayback() }) {
+            Icon(
+                imageVector = ImageVector.vectorResource(R.drawable.stop_button),
+                contentDescription = "Stop",
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
         }
     }
 }
@@ -331,9 +296,7 @@ fun FilesDisplay(
                         if (currentFile != track.assetPath) {
                             musicPlayerViewModel.playFile(track.assetPath)
                             fetchAndSavePiIp(context)
-                            CoroutineScope(Dispatchers.IO).launch {
-                                sendAssetToServer(context, track.assetPath)
-                            }
+
                         }
                     },
                 colors = CardDefaults.cardColors(
