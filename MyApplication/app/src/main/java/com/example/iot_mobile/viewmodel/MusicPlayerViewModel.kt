@@ -2,13 +2,17 @@ package com.example.iot_mobile.viewmodel
 
 
 import android.app.Application
-import android.content.res.AssetFileDescriptor
-import android.media.MediaPlayer
+import android.content.Context
+import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.iot_mobile.data.Track
+import com.example.iot_mobile.data.loadTracksFromAssets
+import com.example.iot_mobile.data.loadTracksFromLocalFiles
 import com.example.iot_mobile.network.getCommandUrl
-import com.example.iot_mobile.ui.screen.sendAssetToServer
+import com.example.iot_mobile.ui.screen.sendTrackToServer
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -17,10 +21,12 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.content.TextContent
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+
 class MusicPlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context = application.applicationContext
@@ -44,18 +50,45 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
     private val _status = MutableStateFlow("IDLE")
     val status = _status.asStateFlow()
 
+    private val _tracks = MutableStateFlow<List<Track>>(emptyList())
+    val tracks: StateFlow<List<Track>> = _tracks
 
-    fun playFile(fileName: String) {
+    fun loadAllTracks(context: Context) {
+        _tracks.value =
+            loadTracksFromAssets(context) +
+                    loadTracksFromLocalFiles(context)
+    }
+    fun addSongFromUri(context: Context, uri: Uri) {
+        val resolver = context.contentResolver
+
+        val name = resolver.query(uri, null, null, null, null)
+            ?.use { cursor ->
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                cursor.moveToFirst()
+                cursor.getString(index)
+            } ?: "song_${System.currentTimeMillis()}.mp3"
+
+        val file = File(context.filesDir, name)
+
+        resolver.openInputStream(uri)?.use { input ->
+            file.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        loadAllTracks(context)
+    }
+    fun playFile(track: Track) {
         viewModelScope.launch {
             try {
 
                 _status.value = "Uploading..."
-                sendAssetToServer(context, fileName)
+                sendTrackToServer(context, track)
 
                 _status.value = "Playing"
                 sendResumeRequest()
 
-                _currentFile.value = fileName
+                _currentFile.value = track.path
                 _isPlaying.value = true
             } catch (e: Exception) {
                 _status.value = "Error"
@@ -158,6 +191,16 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         } finally {
             client.close()
         }
+    }
+    fun deleteTrack(context: Context, track: Track) {
+        if (track.isAsset) return
+
+        val file = File(track.path)
+        if (file.exists()) {
+            file.delete()
+        }
+
+        loadAllTracks(context)
     }
 
 
