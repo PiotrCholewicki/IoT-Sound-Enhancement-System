@@ -25,7 +25,7 @@
     </style>
 </head>
 <body>
-    <h1>💻 Konfiguracja Wi-Fi Raspberry Pi</h1>
+    <h1>Konfiguracja Wi-Fi Raspberry Pi</h1>
 
     <div class="card">
         <form id="wifi-form">
@@ -45,7 +45,7 @@
         <div id="message"></div>
 
         <div class="status" id="status-box">
-            <h3>📶 Status połączenia</h3>
+            <h3>Status połączenia</h3>
             <p><b>Sieć:</b> {{ status.ssid }}</p>
             <p><b>Adres IP:</b> {{ status.ip }}</p>
             <p><b>Sygnał:</b> {{ status.signal }}</p>
@@ -73,7 +73,7 @@
             const res = await fetch("/status");
             const status = await res.json();
             statusBox.innerHTML = `
-                <h3>📶 Status połączenia</h3>
+                <h3>Status połączenia</h3>
                 <p><b>Sieć:</b> ${status.ssid}</p>
                 <p><b>Adres IP:</b> ${status.ip}</p>
                 <p><b>Sygnał:</b> ${status.signal}</p>

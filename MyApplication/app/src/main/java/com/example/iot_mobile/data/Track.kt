@@ -12,10 +12,10 @@
         val files = context.assets.list("audio_files") ?: emptyArray()
 
         return files
-            .filter { it.endsWith(".mp3") }
+            .filter { it.endsWith(".mp3") || it.endsWith(".wav") }
             .map { fileName ->
                 Track(
-                    name = fileName.removeSuffix(".mp3"),
+                    name = fileName.substringBeforeLast("."),
                     path = "audio_files/$fileName",
                     isAsset = true
                 )
@@ -23,7 +23,7 @@
     }
     fun loadTracksFromLocalFiles(context: Context): List<Track> {
         return context.filesDir
-            .listFiles { file -> file.extension == "mp3" }
+            .listFiles { file -> file.extension.lowercase() in listOf("mp3", "wav") }
             ?.map { file ->
                 Track(
                     name = file.nameWithoutExtension,
@@ -32,3 +32,4 @@
                 )
             } ?: emptyList()
     }
+

@@ -7,6 +7,7 @@ import numpy as np
 import os
 
 def dsp(record_seconds=3, music_path="odebrany_plik.mp3"):
+    #obliczenie referencyjnego RMS mikrofonu
     rms_ref_db = get_mic_reference()
     if rms_ref_db is None:
         print("[DSP] Brak kalibracji - wykonuję nagranie ciszy...")
@@ -19,7 +20,7 @@ def dsp(record_seconds=3, music_path="odebrany_plik.mp3"):
     audio_dir = os.path.join(base_dir, "audio_files")
     output_file = os.path.join(audio_dir, "song_adaptive.wav")
 
-    noise_file = record_audio(5.0)# nagranie szumu
+    noise_file = record_audio(2)# nagranie szumu
     y_noise, sr = librosa.load(noise_file, sr=None, mono=True)
     noise_rms = 20 * np.log10(np.sqrt(np.mean(y_noise**2)) + 1e-12)
 

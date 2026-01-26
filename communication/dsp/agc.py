@@ -16,16 +16,19 @@ def adaptive_gain_control(music_file, noise_rms_db, rms_ref_db, output_file):
     - limiter działa tylko gdy próbki przekraczają TARGET_PEAK
     """
 
-    # 1️⃣ Wczytanie muzyki
+    # Wczytanie muzyki
     y, sr = sf.read(music_file)
-    if y.ndim > 1:
-        y = np.mean(y, axis=1)  # konwersja do mono
+    #obliczenie 
+    # if y.ndim > 1:
+    #     rms_music = 20 * np.log10(np.sqrt(np.mean(np.mean(y**2, axis=1))) + 1e-12)
+    # else:
+    #     rms_music = 20 * np.log10(np.sqrt(np.mean(y**2)) + 1e-12)
 
-    # 2️⃣ Obliczenie RMS muzyki
-    rms_music = 20 * np.log10(np.sqrt(np.mean(y**2)) + 1e-12)
+    # # Obliczenie RMS muzyki
+    # rms_music = 20 * np.log10(np.sqrt(np.mean(y**2)) + 1e-12)
     peak_before = np.max(np.abs(y))
 
-    # 3️⃣ Różnica RMS szumu
+    # Różnica RMS szumu
     delta_db = noise_rms_db - rms_ref_db
     message = ""
     if delta_db < MIN_DELTA_DB:
@@ -35,7 +38,7 @@ def adaptive_gain_control(music_file, noise_rms_db, rms_ref_db, output_file):
     else:
 
         # nieliniowa krzywa (łagodna)
-        x = np.clip(delta_db / FULL_NOISE_DB, 0.0, 1.0)
+        x = np.clip(delta_db / FULL_NOISE_DB, 0.0, 1.0) * 100
         gain_db = MAX_GAIN_DB * np.log10(1 + 9 * x)
 
 
@@ -50,12 +53,12 @@ def adaptive_gain_control(music_file, noise_rms_db, rms_ref_db, output_file):
     with open("dsp_agc_log.txt", "a") as f:  # dopisujemy
         f.write(message + "\n")
 
-    # 4️⃣ Przeliczenie gain na wartość liniową
+    # Przeliczenie gain na wartość liniową
     gain_lin = 10 ** (gain_db / 20)
     y = y * gain_lin
 
 
-    # 6️⃣ Zapis pliku
+    # Zapis pliku
     sf.write(output_file, y, sr)
     print(f"[AGC] Zapisano wynik: {output_file}")
     peak_final = np.max(np.abs(y))
