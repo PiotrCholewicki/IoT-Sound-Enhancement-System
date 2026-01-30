@@ -40,7 +40,7 @@ def adaptive_gain_control(music_file, noise_rms_db, rms_ref_db, output_file):
     gain_lin = 10 ** (gain_db / 20)
     y = y * gain_lin
 
-    sf.write(output_file, y, sr)
+    sf.write(output_file, y, sr, subtype="FLOAT")
     print(f"[AGC] Zapisano wynik: {output_file}")
     peak_final = np.max(np.abs(y))
     print(f"[AGC] Peak przed korekcją: {peak_before:.3f}")
