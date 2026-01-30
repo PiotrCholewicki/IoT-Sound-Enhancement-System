@@ -13,7 +13,7 @@ print("start")
 app = FastAPI()
 templates = Jinja2Templates(directory="communication/templates")
 
-# 🔍 Funkcja skanująca sieci przez wlan1, aż znajdzie jakieś sieci
+#Funkcja skanująca sieci przez wlan1, aż znajdzie jakieś sieci
 def scan_networks():
     try:
         networks = []
@@ -34,13 +34,13 @@ def scan_networks():
         return [f"Błąd: {e}"]
 
 
-# Użyj stałej, unikalnej nazwy profilu, aby uniknąć konfliktów z SSID
+#SSID
 CONNECTION_NAME = "Raspi_WPA_Profile" 
 
 def get_nm_logs(ifname: str) -> str:
     """Pobiera ostatnie logi NetworkManager dotyczące danego interfejsu."""
     try:
-        # Pamiętaj, aby uruchomić to z uprawnieniami sudo, aby uzyskać dostęp do dziennika systemowego
+        #Dostęp do dziennika systemowego
         log_command = [
             "sudo", "journalctl", 
             "-u", "NetworkManager", 
@@ -49,7 +49,7 @@ def get_nm_logs(ifname: str) -> str:
         ]
         result = subprocess.run(log_command, capture_output=True, text=True, check=False)
         
-        # Filtruj logi, aby pokazać tylko te dotyczące naszego interfejsu i błędy
+        # Logi interfejsu i błędy
         filtered_logs = [
             line.strip() 
             for line in result.stdout.splitlines() 
@@ -61,15 +61,6 @@ def get_nm_logs(ifname: str) -> str:
 
 
 def connect_to_wifi(ssid: str, password: str, ifname: str = "wlan1") -> bool:
-    """
-    Tworzy lub modyfikuje stabilny profil Wi-Fi za pomocą NetworkManager (nmcli) 
-    z jawnym użyciem protokołu WPA/WPA2-PSK i aktywuje go.
-
-    Argumenty:
-        ssid (str): Nazwa sieci Wi-Fi (SSID).
-        password (str): Hasło do sieci Wi-Fi.
-        ifname (str): Nazwa interfejsu (domyślnie 'wlan1').
-    """
     print(f"Próba konfiguracji stabilnego połączenia WPA/WPA2-PSK dla SSID: {ssid}")
     
     # Krok 0: Usunięcie starego profilu, aby zapewnić czystą konfigurację
@@ -119,24 +110,24 @@ def connect_to_wifi(ssid: str, password: str, ifname: str = "wlan1") -> bool:
         # Krok 3: Weryfikacja adresu IP
         ip_check = subprocess.run(["ip", "a", "show", ifname], capture_output=True, text=True, check=False)
         if "inet " in ip_check.stdout:
-            print("✅ SUKCES: Połączenie aktywne i interfejs ma adres IP.")
+            print("SUKCES: Połączenie aktywne i interfejs ma adres IP.")
             return True
         else:
-            print("❌ BŁĄD: Połączenie się nie powiodło (Brak adresu IP po 12s).")
+            print("BŁĄD: Połączenie się nie powiodło (Brak adresu IP po 12s).")
             print("   --- LOGI NETWORKMANAGER (OSTATNIA MINUTA) ---")
             print(get_nm_logs(ifname))
             print("   ---------------------------------------------")
             return False
 
     except subprocess.CalledProcessError as e:
-        print(f"❌ BŁĄD NMCLI. Polecenie '{' '.join(e.cmd)}' nie powiodło się.")
+        print(f"BŁĄD NMCLI. Polecenie '{' '.join(e.cmd)}' nie powiodło się.")
         print(f"   STDERR: {e.stderr.decode().strip()}")
         print("   --- LOGI NETWORKMANAGER (OSTATNIA MINUTA) ---")
         print(get_nm_logs(ifname))
         print("   ---------------------------------------------")
         return False
     except Exception as e:
-        print(f"❌ Nieoczekiwany błąd: {e}")
+        print(f"Nieoczekiwany błąd: {e}")
         return False
 
 # 🔧 Pobranie aktualnego statusu
