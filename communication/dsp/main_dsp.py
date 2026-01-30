@@ -13,8 +13,6 @@ def dsp(record_seconds=3, music_path="odebrany_plik.mp3"):
         rms_ref_db = calibrate_microphone(record_seconds=3)
 
 
-
-    # Adaptive gain
     base_dir = os.path.dirname(os.path.abspath(__file__))
     audio_dir = os.path.join(base_dir, "audio_files")
     output_file = os.path.join(audio_dir, "song_adaptive.wav")
@@ -27,10 +25,7 @@ def dsp(record_seconds=3, music_path="odebrany_plik.mp3"):
 
     #plot_audio_comparison(music_path, output_file)
 
-    return output_file  # zwracamy finalny plik
-
-
-
+    return output_file 
 
 if __name__ == "__main__":
     print("Uruchamiam DSP...")
